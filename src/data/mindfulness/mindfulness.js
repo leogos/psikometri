@@ -35,6 +35,8 @@ export const mindfulnessTest = {
 
   result: {
     type: 'percentage',
+    message:
+      'Farkındalık yüzdeniz, bilinçli farkındalık düzeyiniz hakkında genel bir bilgi sunar.',
   },
 
   questions: [

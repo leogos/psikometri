@@ -1,11 +1,19 @@
-import { mindfulnessTest } from './mindfulness';
-import { depresyonTest } from './depresyon';
-import { obsesyonTest } from './obsesyon';
-import { anksiyeteTest } from './anksiyete';
-
-export const tests = {
-  mindfulness: mindfulnessTest,
-  depresyon: depresyonTest,
-  obsesyon: obsesyonTest,
-  anksiyete: anksiyeteTest,
+const testLoaders = {
+  mindfulness: () => import('./mindfulness/mindfulness'),
+  depresyon: () => import('./depresyon/depresyon'),
+  anksiyete: () => import('./anksiyete/anksiyete'),
+  obsesyon: () => import('./obsesyon/obsesyon'),
 };
+
+export async function loadTest(testSlug) {
+  const loader = testLoaders[testSlug];
+
+  if (!loader) {
+    return null;
+  }
+
+  const module = await loader();
+  const testExportName = `${testSlug}Test`;
+
+  return module[testExportName] || null;
+}

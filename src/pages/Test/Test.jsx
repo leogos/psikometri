@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 
-import { tests } from '../../data/tests';
+import { loadTest } from '../../data/tests';
 
 import {
   calculateMaxScore,
@@ -17,9 +17,10 @@ import styles from './Test.module.css';
 function Test() {
   const { testSlug } = useParams();
 
-  const test = tests[testSlug];
-
   const storageKey = `piskometri_${testSlug}`;
+
+  const [test, setTest] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   const [answers, setAnswers] = useState(() => {
     const savedData = localStorage.getItem(storageKey);
@@ -58,6 +59,35 @@ function Test() {
   const questionRefs = useRef([]);
   const resultRef = useRef(null);
   const resultButtonRef = useRef(null);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    setIsLoading(true);
+    setTest(null);
+
+    loadTest(testSlug)
+      .then(loadedTest => {
+        if (!isMounted) {
+          return;
+        }
+
+        setTest(loadedTest);
+        setIsLoading(false);
+      })
+      .catch(() => {
+        if (!isMounted) {
+          return;
+        }
+
+        setTest(null);
+        setIsLoading(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [testSlug]);
 
   useEffect(() => {
     if (!test) {
@@ -188,6 +218,16 @@ Test sonucumu birlikte değerlendirmek için yardımcı olabilir misiniz?`;
     window.open(whatsappUrl, '_blank');
   };
 
+  if (isLoading) {
+    return (
+      <main className={styles.page}>
+        <div className={styles.container}>
+          <p>Test yükleniyor...</p>
+        </div>
+      </main>
+    );
+  }
+
   if (!test) {
     return (
       <main className={styles.page}>
@@ -275,7 +315,15 @@ Test sonucumu birlikte değerlendirmek için yardımcı olabilir misiniz?`;
                   </strong>
 
                   {test.result?.type === 'percentage' && (
-                    <p>Farkındalık Yüzdeniz: %{percentage}</p>
+                    <>
+                      <p>Farkındalık Yüzdeniz: %{percentage}</p>
+
+                      {test.result?.message && (
+                        <p className={styles.resultMessage}>
+                          {test.result.message}
+                        </p>
+                      )}
+                    </>
                   )}
 
                   {test.result?.type === 'score' && (
